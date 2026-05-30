@@ -1,0 +1,8 @@
+*.pem -crlf
+**/testdata/** -text -diff
+dist/**/*.exe filter=lfs diff=lfs merge=lfs -text
+dist/**/*.zip filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+build/**/*.exe filter=lfs diff=lfs merge=lfs -text
+build/**/*.zip filter=lfs diff=lfs merge=lfs -text
