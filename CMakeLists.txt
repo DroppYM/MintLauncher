@@ -174,7 +174,7 @@ endif()
 ##################################### Set Application options #####################################
 
 ######## Set URLs ########
-set(Launcher_NEWS_RSS_URL "https://github.com/DroppYM/MintLauncher/commits/main.atom" CACHE STRING "URL to fetch the launcher news RSS feed from.")
+set(Launcher_NEWS_RSS_URL "https://github.com/DroppYM/MintLauncher/releases.atom" CACHE STRING "URL to fetch the launcher news RSS feed from.")
 set(Launcher_NEWS_OPEN_URL "https://github.com/DroppYM/MintLauncher" CACHE STRING "URL that gets opened when the user clicks 'More News'")
 set(Launcher_WIKI_URL "https://github.com/DroppYM/MintLauncher" CACHE STRING "URL that gets opened when the user clicks 'Launcher Help'")
 set(Launcher_HELP_URL "https://github.com/DroppYM/MintLauncher" CACHE STRING "URL opened when the user requests help in a dialog window")
