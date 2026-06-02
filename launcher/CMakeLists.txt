@@ -1486,8 +1486,10 @@ if(Launcher_BUILD_UPDATER)
     target_sources("${Launcher_Name}_updater" PRIVATE updater/prismupdater/updater.exe.manifest)
     target_link_libraries("${Launcher_Name}_updater" prism_updater_logic)
 
+    # Don't reuse PCH from prism_updater_logic because MintLauncher_updater has QT_NEEDS_QMAIN defined
+    # which conflicts with the PCH compiled without it. The updater is small anyway.
     if(${Launcher_USE_PCH})
-        target_precompile_headers("${Launcher_Name}_updater" REUSE_FROM prism_updater_logic)
+        target_precompile_headers("${Launcher_Name}_updater" PRIVATE ${PRECOMPILED_HEADERS})
     endif()
 
     if(DEFINED Launcher_APP_BINARY_NAME)

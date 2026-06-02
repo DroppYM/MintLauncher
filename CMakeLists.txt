@@ -212,7 +212,7 @@ set(Launcher_IMGUR_CLIENT_ID "5b97b0713fba4a3" CACHE STRING "Client ID you can g
 set(Launcher_BUG_TRACKER_URL "https://github.com/DroppYM/MintLauncher/issues" CACHE STRING "URL for the bug tracker.")
 
 # Auto-updater (enabled when BUILD_ARTIFACT is also set at configure time)
-set(Launcher_UPDATER_GITHUB_REPO "DroppYM/MintLauncher" CACHE STRING "Base github URL for the updater.")
+set(Launcher_UPDATER_GITHUB_REPO "https://github.com/DroppYM/MintLauncher" CACHE STRING "Base github URL for the updater.")
 
 # Translations Platform URL
 set(Launcher_TRANSLATIONS_URL "https://hosted.weblate.org/projects/prismlauncher/launcher/" CACHE STRING "URL for the translations platform.")
