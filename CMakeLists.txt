@@ -184,7 +184,7 @@ set(Launcher_LEGACY_FMLLIBS_BASE_URL "https://files.prismlauncher.org/fmllibs/" 
 ######## Set version numbers ########
 set(Launcher_VERSION_MAJOR 11)
 set(Launcher_VERSION_MINOR 0)
-set(Launcher_VERSION_PATCH 7)
+set(Launcher_VERSION_PATCH 8)
 
 set(Launcher_VERSION_NAME "${Launcher_VERSION_MAJOR}.${Launcher_VERSION_MINOR}.${Launcher_VERSION_PATCH}")
 set(Launcher_VERSION_NAME4 "${Launcher_VERSION_MAJOR}.${Launcher_VERSION_MINOR}.${Launcher_VERSION_PATCH}.0")
@@ -199,7 +199,7 @@ set(Launcher_VERSION_CHANNEL_OVERRIDE "stable" CACHE STRING "Override VERSION_CH
 # Github repo URL with releases for updater
 
 # Name to help updater identify valid artifacts
-set(Launcher_BUILD_ARTIFACT "MintLauncher-Windows-Release-Portable" CACHE STRING "Artifact name to help the updater identify valid artifacts.")
+set(Launcher_BUILD_ARTIFACT "MintLauncher-Release" CACHE STRING "Artifact name to help the updater identify valid artifacts.")
 
 # The metadata server
 # Ely.by authlib + authlib-injector live on the Ely/Pinecone meta mirror, not on Prism meta.
