@@ -49,8 +49,9 @@ static int handleVersionFlag(int argc, char* argv[])
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--version") == 0) {
             // Output format: "name version\ngit_commit" – parsed by loadPrismVersionFromExe
-            // NOTE: version must use 'v' prefix to match GitHub release tags (e.g. "v11.0.8")
-            printf("mintlauncher v11.0.8\n02a2fd115da7b7825b7eda3911621cd11bf502ef\n");
+            // NOTE: version should NOT use 'v' prefix – must be raw semver "11.0.8"
+            // for loadPrismVersionFromExe to parse it correctly via split('.') -> toInt()
+            printf("mintlauncher 11.0.8\n02a2fd115da7b7825b7eda3911621cd11bf502ef\n");
             return 1;
         }
     }

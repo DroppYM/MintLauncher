@@ -1189,7 +1189,11 @@ int PrismUpdaterApp::parseReleasePage(const QByteArray* response)
             release.draft = Json::requireBoolean(release_obj, "draft");
             release.prerelease = Json::requireBoolean(release_obj, "prerelease");
             release.body = release_obj["body"].toString();
-            release.version = Version(release.tag_name);
+            // Strip leading 'v'/'V' prefix from tag names like "v11.0.8" for version comparison
+            auto tag = release.tag_name;
+            if (tag.startsWith('v') || tag.startsWith('V'))
+                tag = tag.mid(1);
+            release.version = Version(tag);
 
             auto release_assets_obj = Json::requireArray(release_obj, "assets");
             for (auto asset_json : release_assets_obj) {
