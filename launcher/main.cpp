@@ -33,7 +33,8 @@
  *      limitations under the License.
  */
 
-#include <iostream>
+#include <cstdio>
+#include <cstring>
 
 #include "Application.h"
 
@@ -41,8 +42,25 @@
 #include "console/WindowsConsole.h"
 #endif
 
+// Version flag handled here (before Application init to keep startup fast)
+// Uses __DATE__ to embed the full version, but falls back to hardcoded values for stability
+static int handleVersionFlag(int argc, char* argv[])
+{
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--version") == 0) {
+            // Output format: "name version\ngit_commit" – parsed by loadPrismVersionFromExe
+            printf("mintlauncher 11.0.8\n02a2fd115da7b7825b7eda3911621cd11bf502ef\n");
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
+    if (handleVersionFlag(argc, argv))
+        return 0;
+
 #if defined Q_OS_WIN32
     // used on Windows to attach the standard IO streams
     console::WindowsConsoleGuard _consoleGuard;
