@@ -72,6 +72,7 @@
 #include "minecraft/update/AssetUpdateTask.h"
 #include "minecraft/update/CustomSkinLoaderInstallTask.h"
 #include "minecraft/update/ElyPatchTask.h"
+#include "minecraft/SkinProxyServer.h"
 #include "minecraft/update/FoldersTask.h"
 #include "minecraft/update/LegacyFMLLibrariesTask.h"
 #include "minecraft/update/LibrariesTask.h"
@@ -648,6 +649,13 @@ QStringList MinecraftInstance::javaArguments()
         // allow reflective access to java.net - required by the skin fix
         args << "--add-opens" << "java.base/java.net=ALL-UNNAMED";
 
+    // Skin proxy: redirect session server traffic through local proxy for ely.by skins
+    if (m_skinProxy && m_skinProxy->isRunning()) {
+        args << "-Dhttp.proxyHost=127.0.0.1" << QString("-Dhttp.proxyPort=%1").arg(m_skinProxy->port());
+        args << "-Dhttps.proxyHost=127.0.0.1" << QString("-Dhttps.proxyPort=%1").arg(m_skinProxy->port());
+        qDebug() << "SkinProxyServer: injected proxy JVM args for port" << m_skinProxy->port();
+    }
+
     return args;
 }
 
@@ -1138,6 +1146,30 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
     updateRuntimeContext();
     auto process = LaunchTask::create(this);
     auto pptr = process.get();
+
+    // Start skin proxy for ely.by custom skins on vanilla
+    if (APPLICATION->settings()->get("MintSkinProxy").toBool() && session) {
+        if (!m_skinProxy) {
+            m_skinProxy = std::make_unique<SkinProxyServer>(this);
+        }
+        if (m_skinProxy->start()) {
+            // Build profile JSON from session data for the proxy to serve
+            QJsonObject profile;
+            profile["id"] = session->uuid;
+            profile["name"] = session->player_name;
+            QJsonArray properties;
+            QJsonObject texturesProp;
+            texturesProp["name"] = "textures";
+            // The proxy will serve this profile; skin URLs come from ely.by session server
+            texturesProp["value"] = "";  // Empty value means use Mojang's default
+            properties.append(texturesProp);
+            profile["properties"] = properties;
+            m_skinProxy->setProfileData(QJsonDocument(profile).toJson(QJsonDocument::Compact));
+            qDebug() << "SkinProxyServer: started on port" << m_skinProxy->port();
+        } else {
+            qWarning() << "SkinProxyServer: failed to start, skins will use default";
+        }
+    }
 
     APPLICATION->icons()->saveIcon(iconKey(), FS::PathCombine(gameRoot(), "icon.png"), "PNG");
 

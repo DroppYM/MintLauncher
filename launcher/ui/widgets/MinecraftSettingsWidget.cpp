@@ -302,6 +302,7 @@ void MinecraftSettingsWidget::loadSettings()
 
     m_ui->legacySettingsGroupBox->setChecked(settings->get("OverrideLegacySettings").toBool());
     m_ui->onlineFixes->setChecked(settings->get("OnlineFixes").toBool());
+    m_ui->skinProxyCheck->setChecked(APPLICATION->settings()->get("MintSkinProxy").toBool());
 
     m_ui->globalDataPacksGroupBox->blockSignals(true);
     m_ui->dataPacksPathEdit->blockSignals(true);
@@ -498,6 +499,9 @@ void MinecraftSettingsWidget::saveSettings()
         } else {
             settings->reset("OnlineFixes");
         }
+
+        // Skin proxy (global setting)
+        APPLICATION->settings()->set("MintSkinProxy", m_ui->skinProxyCheck->isChecked());
     }
 
     if (m_javaSettings != nullptr)

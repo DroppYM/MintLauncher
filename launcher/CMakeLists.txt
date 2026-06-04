@@ -259,6 +259,8 @@ set(MINECRAFT_SOURCES
 
     minecraft/update/AssetUpdateTask.h
     minecraft/update/AssetUpdateTask.cpp
+    minecraft/SkinProxyServer.cpp
+    minecraft/SkinProxyServer.h
     minecraft/update/CustomSkinLoaderInstallTask.cpp
     minecraft/update/CustomSkinLoaderInstallTask.h
     minecraft/update/ElyPatchTask.cpp
