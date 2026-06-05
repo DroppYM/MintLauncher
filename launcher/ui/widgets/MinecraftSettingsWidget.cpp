@@ -74,7 +74,7 @@ MinecraftSettingsWidget::MinecraftSettingsWidget(MinecraftInstance* instance, QW
             tr("<span style=\" font-weight:600; color:#f5c211;\">Warning</span><span style=\" color:#f5c211;\">: The maximized option is "
                "not fully supported on this Minecraft version.</span>"));
 
-        m_ui->elyGroupBox->setCheckable(true);
+        m_ui->mintPatchesGroupBox->setCheckable(true);
         m_ui->consoleSettingsBox->setCheckable(true);
         m_ui->windowSizeGroupBox->setCheckable(true);
         m_ui->nativeWorkaroundsGroupBox->setCheckable(true);
@@ -162,9 +162,9 @@ void MinecraftSettingsWidget::loadSettings()
     else
         settings = APPLICATION->settings();
 
-    // Ely.by patch
-    m_ui->elyGroupBox->setChecked(m_instance == nullptr || settings->get("OverrideElySettings").toBool());
-    m_ui->applyElyPatch->setCurrentIndex(settings->get("ElyPatchPreference").toInt());
+    // Mint patches
+    m_ui->mintPatchesGroupBox->setChecked(m_instance == nullptr || settings->get("OverrideElySettings").toBool());
+    m_ui->applyMintPatches->setCurrentIndex(settings->get("ElyPatchPreference").toInt());
 
     // Game Window
     m_ui->windowSizeGroupBox->setChecked(m_instance == nullptr || settings->get("OverrideWindow").toBool() ||
@@ -302,7 +302,6 @@ void MinecraftSettingsWidget::loadSettings()
 
     m_ui->legacySettingsGroupBox->setChecked(settings->get("OverrideLegacySettings").toBool());
     m_ui->onlineFixes->setChecked(settings->get("OnlineFixes").toBool());
-    m_ui->skinProxyCheck->setChecked(APPLICATION->settings()->get("MintSkinProxy").toBool());
 
     m_ui->globalDataPacksGroupBox->blockSignals(true);
     m_ui->dataPacksPathEdit->blockSignals(true);
@@ -324,14 +323,14 @@ void MinecraftSettingsWidget::saveSettings()
     {
         SettingsObject::Lock lock(settings);
 
-        // Ely.by patch
-        bool ely = m_instance == nullptr || m_ui->elyGroupBox->isChecked();
+        // Mint patches
+        bool mint = m_instance == nullptr || m_ui->mintPatchesGroupBox->isChecked();
 
         if (m_instance != nullptr)
-            settings->set("OverrideElySettings", ely);
+            settings->set("OverrideElySettings", mint);
 
-        if (ely) {
-            settings->set("ElyPatchPreference", m_ui->applyElyPatch->currentIndex());
+        if (mint) {
+            settings->set("ElyPatchPreference", m_ui->applyMintPatches->currentIndex());
         } else {
             settings->reset("ElyPatchPreference");
         }
@@ -500,8 +499,7 @@ void MinecraftSettingsWidget::saveSettings()
             settings->reset("OnlineFixes");
         }
 
-        // Skin proxy (global setting)
-        APPLICATION->settings()->set("MintSkinProxy", m_ui->skinProxyCheck->isChecked());
+
     }
 
     if (m_javaSettings != nullptr)

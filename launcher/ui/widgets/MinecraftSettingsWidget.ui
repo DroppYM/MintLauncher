@@ -65,20 +65,20 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
-            <widget class="QGroupBox" name="elyGroupBox">
+            <widget class="QGroupBox" name="mintPatchesGroupBox">
              <property name="title">
-              <string>Ely.by patch</string>
+              <string>Mint patches</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_3">
               <item row="0" column="0">
                <widget class="QLabel" name="label_5">
                 <property name="text">
-                 <string>Download and apply Ely.by game patch:</string>
+                 <string>Download and apply Mint game patches:</string>
                 </property>
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QComboBox" name="applyElyPatch">
+               <widget class="QComboBox" name="applyMintPatches">
                 <item>
                  <property name="text">
                   <string>Always</string>
@@ -86,7 +86,7 @@
                 </item>
                 <item>
                  <property name="text">
-                  <string>When using Ely.by or Offline account only</string>
+                  <string>When using Ely.by or Offline account only (default)</string>
                  </property>
                 </item>
                 <item>
@@ -683,19 +683,6 @@ It is most likely you will need to change the path - please refer to the mod's w
                  </property>
                  <property name="text">
                   <string>Enable online fixes (experimental)</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="skinProxyCheck">
-                 <property name="toolTip">
-                  <string>Enable a local skin proxy that intercepts Minecraft session server requests and serves your ely.by custom skins. This allows vanilla Minecraft (without mods) to display your ely.by skins automatically. The proxy runs on localhost only while the game is launching.</string>
-                 </property>
-                 <property name="text">
-                  <string>Enable ely.by skin proxy for vanilla (default: on)</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
