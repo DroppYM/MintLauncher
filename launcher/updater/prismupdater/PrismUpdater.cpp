@@ -654,7 +654,7 @@ QList<GitHubReleaseAsset> PrismUpdaterApp::validReleaseArtifacts(const GitHubRel
 {
     QList<GitHubReleaseAsset> valid;
 
-    qDebug() << "Selecting best asset from" << release.tag_name << "for platform" << BuildConfig.BUILD_ARTIFACT
+    qDebug() << "Selecting best asset from" << release.tag_name << "for platform artifact" << BuildConfig.BUILD_ARTIFACT
              << "portable:" << m_isPortable;
     if (BuildConfig.BUILD_ARTIFACT.isEmpty())
         qWarning() << "Build platform is not set!";
@@ -670,18 +670,34 @@ QList<GitHubReleaseAsset> PrismUpdaterApp::validReleaseArtifacts(const GitHubRel
             qDebug() << "Rejecting" << asset.name << "because it is not an AppImage";
             continue;
         }
+
         auto asset_name = asset.name.toLower();
-        auto [platform, platform_qt_ver] = StringUtils::splitFirst(BuildConfig.BUILD_ARTIFACT.toLower(), "-qt");
         auto system_is_arm = QSysInfo::buildCpuArchitecture().contains("arm64");
         auto asset_is_arm = asset_name.contains("arm64");
         auto asset_is_archive = asset_name.endsWith(".zip") || asset_name.endsWith(".tar.gz");
 
-        bool for_platform = !platform.isEmpty() && asset_name.contains(platform);
+        // Determine platform from asset name
+        bool is_windows = asset_name.contains("windows");
+
+        // Determine variant
+        bool for_portable = asset_name.contains("portable");
+        bool for_setup = asset_name.contains("setup");
+        bool is_plain_zip = asset_is_archive && !for_portable && !for_setup;
+
+        // Match on current platform
+        bool for_platform = false;
+#if defined(Q_OS_WIN32)
+        for_platform = is_windows;
+#elif defined(Q_OS_LINUX)
+        for_platform = asset_name.contains("linux") || asset_name.contains("appimage");
+#elif defined(Q_OS_MAC)
+        for_platform = asset_name.contains("macos") || asset_name.contains("osx");
+#endif
+
         if (!for_platform) {
             qDebug() << "Rejecting" << asset.name << "because platforms do not match";
         }
-        bool for_portable = asset_name.contains("portable");
-        if (for_platform && asset_name.contains("legacy") && !platform.contains("legacy")) {
+        if (for_platform && asset_name.contains("legacy") && !is_windows) {
             qDebug() << "Rejecting" << asset.name << "because platforms do not match";
             for_platform = false;
         }
@@ -689,22 +705,19 @@ QList<GitHubReleaseAsset> PrismUpdaterApp::validReleaseArtifacts(const GitHubRel
             qDebug() << "Rejecting" << asset.name << "because architecture does not match";
             for_platform = false;
         }
-        if (for_platform && platform.contains("windows") && !m_isPortable && asset_is_archive) {
-            qDebug() << "Rejecting" << asset.name << "because it is not an installer";
+
+#if defined(Q_OS_WIN32)
+        if (for_platform && !m_isPortable && !for_setup && !is_plain_zip) {
+            qDebug() << "Rejecting" << asset.name << "because it is not an installer or binary zip";
             for_platform = false;
         }
-
-        static const QRegularExpression s_qtPattern("-qt(\\d+)");
-        auto qt_match = s_qtPattern.match(asset_name);
-        if (for_platform && qt_match.hasMatch()) {
-            if (platform_qt_ver.isEmpty() || platform_qt_ver.toInt() != qt_match.captured(1).toInt()) {
-                qDebug() << "Rejecting" << asset.name << "because it is not for the correct qt version" << platform_qt_ver.toInt() << "vs"
-                         << qt_match.captured(1).toInt();
-                for_platform = false;
-            }
+        if (for_platform && m_isPortable && !for_portable) {
+            qDebug() << "Rejecting" << asset.name << "because it is not a portable archive";
+            for_platform = false;
         }
+#endif
 
-        if (((m_isPortable && for_portable) || (!m_isPortable && !for_portable)) && for_platform) {
+        if (for_platform) {
             qDebug() << "Accepting" << asset.name;
             valid.append(asset);
         }
@@ -1245,4 +1258,3 @@ void PrismUpdaterApp::downloadError(QString reason)
 {
     fail(QString("Network request Failed: %1 with reason %2").arg(m_current_url).arg(reason));
 }
-
