@@ -211,6 +211,9 @@ set(Launcher_IMGUR_CLIENT_ID "5b97b0713fba4a3" CACHE STRING "Client ID you can g
 # Bug tracker URL
 set(Launcher_BUG_TRACKER_URL "https://github.com/DroppYM/MintLauncher/issues" CACHE STRING "URL for the bug tracker.")
 
+# Update manifest URL (custom JSON file with version + download URLs)
+set(Launcher_UPDATE_MANIFEST_URL "https://droppym.github.io/MintLauncher/update.json" CACHE STRING "URL to the update manifest JSON file.")
+
 # Auto-updater (enabled when BUILD_ARTIFACT is also set at configure time)
 set(Launcher_UPDATER_GITHUB_REPO "https://github.com/DroppYM/MintLauncher" CACHE STRING "Base github URL for the updater.")
 

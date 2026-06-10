@@ -1110,19 +1110,103 @@ bool PrismUpdaterApp::loadPrismVersionFromExe(const QString& exe_path)
 
 void PrismUpdaterApp::loadReleaseList()
 {
-    auto github_repo = m_prismRepoUrl;
-    if (github_repo.host() != "github.com")
-        return fail("updating from a non github url is not supported");
+    auto manifest_url = BuildConfig.UPDATE_MANIFEST_URL;
+    if (manifest_url.isEmpty()) {
+        qWarning() << "UPDATE_MANIFEST_URL is empty, falling back to GitHub API";
+        // Fallback to old GitHub API behavior
+        auto github_repo = m_prismRepoUrl;
+        if (github_repo.host() != "github.com")
+            return fail("updating from a non github url is not supported");
 
-    auto path_parts = github_repo.path().split('/');
-    path_parts.removeFirst();  // empty segment from leading /
-    auto repo_owner = path_parts.takeFirst();
-    auto repo_name = path_parts.takeFirst();
-    auto api_url = QString("https://api.github.com/repos/%1/%2/releases").arg(repo_owner, repo_name);
+        auto path_parts = github_repo.path().split('/');
+        path_parts.removeFirst();
+        auto repo_owner = path_parts.takeFirst();
+        auto repo_name = path_parts.takeFirst();
+        auto api_url = QString("https://api.github.com/repos/%1/%2/releases").arg(repo_owner, repo_name);
+        downloadReleasePage(api_url, 1);
+        return;
+    }
 
-    qDebug() << "Fetching release list from" << api_url;
+    qDebug() << "Fetching update manifest from" << manifest_url;
 
-    downloadReleasePage(api_url, 1);
+    auto [download, response] = Net::Download::makeByteArray(manifest_url);
+    download->setNetwork(m_network.get());
+    m_current_url = manifest_url;
+
+    connect(download.get(), &Net::Download::succeeded, this, [this, response]() {
+        parseManifest(response);
+        run();
+    });
+    connect(download.get(), &Net::Download::failed, this, &PrismUpdaterApp::downloadError);
+
+    m_current_task.reset(download);
+    connect(download.get(), &Net::Download::finished, this, [this]() {
+        qDebug() << "Manifest download finished";
+        m_current_task.reset();
+        m_current_url = "";
+    });
+
+    QCoreApplication::processEvents();
+    QMetaObject::invokeMethod(download.get(), &Task::start, Qt::QueuedConnection);
+}
+
+void PrismUpdaterApp::parseManifest(const QByteArray* response)
+{
+    if (response->isEmpty()) {
+        qWarning() << "Update manifest is empty!";
+        return;
+    }
+
+    try {
+        auto doc = Json::requireDocument(*response);
+        auto obj = Json::requireObject(doc);
+
+        QString versionStr = obj["version"].toString();
+        QString installerUrl = obj["installer_download"].toString();
+        QString portableUrl = obj["portable_download"].toString();
+
+        qDebug() << "Manifest version:" << versionStr;
+        qDebug() << "Installer URL:" << installerUrl;
+        qDebug() << "Portable URL:" << portableUrl;
+
+        if (versionStr.isEmpty()) {
+            fail("Update manifest is missing 'version' field");
+            return;
+        }
+
+        // Pick the right download URL
+        QString downloadUrl = m_isPortable ? portableUrl : installerUrl;
+        if (downloadUrl.isEmpty()) {
+            fail(m_isPortable ? "Update manifest is missing 'portable_download' field" : "Update manifest is missing 'installer_download' field");
+            return;
+        }
+
+        // Build a fake release with a single asset
+        GitHubRelease release = {};
+        release.id = 1;
+        release.name = QString("Mint Launcher %1").arg(versionStr);
+        release.tag_name = QString("v%1").arg(versionStr);
+        release.created_at = QDateTime::currentDateTime();
+        release.published_at = QDateTime::currentDateTime();
+        release.draft = false;
+        release.prerelease = false;
+        release.body = "";
+        release.version = Version(versionStr);
+
+        GitHubReleaseAsset asset = {};
+        asset.id = 1;
+        asset.name = QString("MintLauncher-%1-%2").arg(m_isPortable ? "Portable" : "Setup").arg(versionStr);
+        asset.content_type = m_isPortable ? "application/zip" : "application/x-msdownload";
+        asset.size = 0;
+        asset.created_at = QDateTime::currentDateTime();
+        asset.updated_at = QDateTime::currentDateTime();
+        asset.browser_download_url = downloadUrl;
+        release.assets.append(asset);
+
+        m_releases.append(release);
+    } catch (Json::JsonException& e) {
+        fail(QString("Failed to parse update manifest: %1\n%2").arg(e.what()).arg(QString::fromStdString(response->toStdString())));
+    }
 }
 
 void PrismUpdaterApp::downloadReleasePage(const QString& api_url, int page)
@@ -1142,7 +1226,7 @@ void PrismUpdaterApp::downloadReleasePage(const QString& api_url, int page)
 
     connect(download.get(), &Net::Download::succeeded, this, [this, response, per_page, api_url, page]() {
         int num_found = parseReleasePage(response);
-        if (!(num_found < per_page)) {  // there may be more, fetch next page
+        if (!(num_found < per_page)) {
             downloadReleasePage(api_url, page + 1);
         } else {
             run();
@@ -1158,13 +1242,12 @@ void PrismUpdaterApp::downloadReleasePage(const QString& api_url, int page)
     });
 
     QCoreApplication::processEvents();
-
     QMetaObject::invokeMethod(download.get(), &Task::start, Qt::QueuedConnection);
 }
 
 int PrismUpdaterApp::parseReleasePage(const QByteArray* response)
 {
-    if (response->isEmpty())  // empty page
+    if (response->isEmpty())
         return 0;
     int num_releases = 0;
     try {
@@ -1182,7 +1265,6 @@ int PrismUpdaterApp::parseReleasePage(const QByteArray* response)
             release.draft = Json::requireBoolean(release_obj, "draft");
             release.prerelease = Json::requireBoolean(release_obj, "prerelease");
             release.body = release_obj["body"].toString();
-            // Strip leading 'v'/'V' prefix from tag names like "v11.0.8" for version comparison
             auto tag = release.tag_name;
             if (tag.startsWith('v') || tag.startsWith('V'))
                 tag = tag.mid(1);

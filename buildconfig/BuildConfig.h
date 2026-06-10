@@ -96,6 +96,9 @@ class Config {
     /// A String identifying the compiler target processor
     QString COMPILER_TARGET_SYSTEM_PROCESSOR;
 
+    /// URL for the update manifest JSON
+    QString UPDATE_MANIFEST_URL;
+
     /// URL for the updater's channel
     QString UPDATER_GITHUB_REPO;
 
