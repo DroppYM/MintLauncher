@@ -654,73 +654,53 @@ QList<GitHubReleaseAsset> PrismUpdaterApp::validReleaseArtifacts(const GitHubRel
 {
     QList<GitHubReleaseAsset> valid;
 
-    qDebug() << "Selecting best asset from" << release.tag_name << "for platform artifact" << BuildConfig.BUILD_ARTIFACT
-             << "portable:" << m_isPortable;
-    if (BuildConfig.BUILD_ARTIFACT.isEmpty())
-        qWarning() << "Build platform is not set!";
+    qDebug() << "Selecting best asset from" << release.tag_name << "portable:" << m_isPortable;
+
     for (auto asset : release.assets) {
-        if (asset.name.endsWith(".zsync")) {
+        auto asset_name = asset.name.toLower();
+
+        // Skip zsync files
+        if (asset_name.endsWith(".zsync")) {
             qDebug() << "Rejecting zsync file" << asset.name;
             continue;
         }
-        if (!m_isAppimage && asset.name.toLower().endsWith("appimage")) {
+        // Skip source code archives
+        if (asset.name.startsWith("Source code")) {
+            qDebug() << "Rejecting source archive" << asset.name;
+            continue;
+        }
+        // Skip AppImage if we're not running AppImage
+        if (!m_isAppimage && asset_name.contains("appimage")) {
             qDebug() << "Rejecting" << asset.name << "because it is an AppImage";
             continue;
-        } else if (m_isAppimage && !asset.name.toLower().endsWith("appimage")) {
+        }
+        // Skip non-AppImage if we're running AppImage
+        if (m_isAppimage && !asset_name.contains("appimage")) {
             qDebug() << "Rejecting" << asset.name << "because it is not an AppImage";
             continue;
         }
 
-        auto asset_name = asset.name.toLower();
         auto system_is_arm = QSysInfo::buildCpuArchitecture().contains("arm64");
         auto asset_is_arm = asset_name.contains("arm64");
-        auto asset_is_archive = asset_name.endsWith(".zip") || asset_name.endsWith(".tar.gz");
 
-        // Determine platform from asset name
-        bool is_windows = asset_name.contains("windows");
-
-        // Determine variant
-        bool for_portable = asset_name.contains("portable");
-        bool for_setup = asset_name.contains("setup");
-        bool is_plain_zip = asset_is_archive && !for_portable && !for_setup;
-
-        // Match on current platform
-        bool for_platform = false;
-#if defined(Q_OS_WIN32)
-        for_platform = is_windows;
-#elif defined(Q_OS_LINUX)
-        for_platform = asset_name.contains("linux") || asset_name.contains("appimage");
-#elif defined(Q_OS_MAC)
-        for_platform = asset_name.contains("macos") || asset_name.contains("osx");
-#endif
-
-        if (!for_platform) {
-            qDebug() << "Rejecting" << asset.name << "because platforms do not match";
-        }
-        if (for_platform && asset_name.contains("legacy") && !is_windows) {
-            qDebug() << "Rejecting" << asset.name << "because platforms do not match";
-            for_platform = false;
-        }
-        if (for_platform && ((asset_is_arm && !system_is_arm) || (!asset_is_arm && system_is_arm))) {
+        // Check architecture match
+        if ((asset_is_arm && !system_is_arm) || (!asset_is_arm && system_is_arm)) {
             qDebug() << "Rejecting" << asset.name << "because architecture does not match";
-            for_platform = false;
+            continue;
         }
 
+        // On Windows: look for Setup.exe for installer, zip with Portable for portable
 #if defined(Q_OS_WIN32)
-        if (for_platform && !m_isPortable && !for_setup && !is_plain_zip) {
-            qDebug() << "Rejecting" << asset.name << "because it is not an installer or binary zip";
-            for_platform = false;
-        }
-        if (for_platform && m_isPortable && !for_portable) {
-            qDebug() << "Rejecting" << asset.name << "because it is not a portable archive";
-            for_platform = false;
+        if (!m_isPortable && asset_name.contains("setup") && asset_name.endsWith(".exe")) {
+            qDebug() << "Accepting" << asset.name << "as installer";
+            valid.append(asset);
+        } else if (m_isPortable && asset_name.contains("portable") && (asset_name.endsWith(".zip") || asset_name.endsWith(".tar.gz"))) {
+            qDebug() << "Accepting" << asset.name << "as portable archive";
+            valid.append(asset);
+        } else {
+            qDebug() << "Rejecting" << asset.name << "- does not match installer/portable requirement";
         }
 #endif
-
-        if (for_platform) {
-            qDebug() << "Accepting" << asset.name;
-            valid.append(asset);
-        }
     }
     return valid;
 }
