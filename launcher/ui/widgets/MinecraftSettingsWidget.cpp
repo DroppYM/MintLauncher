@@ -47,6 +47,7 @@
 #include "minecraft/WorldList.h"
 #include "minecraft/auth/AccountList.h"
 #include "settings/Setting.h"
+#include <QCommandLinkButton>
 
 MinecraftSettingsWidget::MinecraftSettingsWidget(MinecraftInstance* instance, QWidget* parent)
     : QWidget(parent), m_instance(std::move(instance)), m_ui(new Ui::MinecraftSettingsWidget)
@@ -203,6 +204,7 @@ void MinecraftSettingsWidget::loadSettings()
     // Legacy Tweaks
     m_ui->legacySettingsGroupBox->setChecked(m_instance == nullptr || settings->get("OverrideLegacySettings").toBool());
     m_ui->onlineFixes->setChecked(settings->get("OnlineFixes").toBool());
+    m_ui->installCustomSkinLoader->setChecked(settings->get("MintInstallCustomSkinLoader").toBool());
 
     // Native Libraries
     m_ui->nativeWorkaroundsGroupBox->setChecked(m_instance == nullptr || settings->get("OverrideNativeWorkarounds").toBool());
@@ -495,6 +497,7 @@ void MinecraftSettingsWidget::saveSettings()
 
         if (overrideLegacySettings) {
             settings->set("OnlineFixes", m_ui->onlineFixes->isChecked());
+            settings->set("MintInstallCustomSkinLoader", m_ui->installCustomSkinLoader->isChecked());
         } else {
             settings->reset("OnlineFixes");
         }

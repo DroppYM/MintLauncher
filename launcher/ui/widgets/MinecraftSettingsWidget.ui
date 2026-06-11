@@ -686,11 +686,18 @@ It is most likely you will need to change the path - please refer to the mod's w
                  </property>
                 </widget>
                </item>
+               <item>
+                <widget class="QCheckBox" name="installCustomSkinLoader">
+                 <property name="text">
+                  <string>Install CustomSkinLoader on launch (Legacy)</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="nativeWorkaroundsGroupBox">
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="nativeWorkaroundsGroupBox">
              <property name="enabled">
               <bool>true</bool>
              </property>

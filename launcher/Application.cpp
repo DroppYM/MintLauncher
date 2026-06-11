@@ -650,7 +650,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting("IconTheme", QString());
         m_settings->registerSetting("ApplicationTheme", QString());
         m_settings->registerSetting("BackgroundCat", QString());
-        m_settings->registerSetting("MintInstallCustomSkinLoader", true);
+    m_settings->registerSetting("MintInstallCustomSkinLoader", false);
 
         // Remembered state
         m_settings->registerSetting("LastUsedGroupForNewInstance", QString());
