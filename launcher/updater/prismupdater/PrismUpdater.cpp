@@ -892,7 +892,73 @@ void PrismUpdaterApp::performInstall(QFileInfo file)
     if (m_isPortable || file.fileName().endsWith(".zip") || file.fileName().endsWith(".tar.gz")) {
         write_lock_file(update_lock_path, QDateTime::currentDateTime(), m_prismVersion, m_install_release.tag_name, m_rootPath, m_dataPath);
         logUpdate(tr("Updating portable install at %1").arg(m_rootPath));
-        unpackAndInstall(file);
+
+        // Step 1: Backup current install
+        backupAppDir();
+
+        // Step 2: Extract the archive to a temp directory
+        auto temp_extract_path = FS::PathCombine(m_dataPath, "prism_launcher_update_release");
+        FS::ensureFolderPathExists(temp_extract_path);
+        auto tmp_extract_dir = QDir(temp_extract_path);
+        auto extract_result = MMCZip::extractDir(file.absoluteFilePath(), tmp_extract_dir.absolutePath());
+        if (!extract_result) {
+            logUpdate(tr("Failed to extract %1 to %2").arg(file.absoluteFilePath()).arg(tmp_extract_dir.absolutePath()));
+            showFatalErrorMessage("Failed to extract archive",
+                                  tr("Failed to extract %1 to %2").arg(file.absoluteFilePath()).arg(tmp_extract_dir.absolutePath()));
+            return;
+        }
+        logUpdate(tr("Extracted the following to \"%1\":\n  %2").arg(tmp_extract_dir.absolutePath()).arg(extract_result->join("\n  ")));
+
+        // Step 3: Copy files from extracted dir to install dir (overwriting)
+        bool error = false;
+        auto entries = tmp_extract_dir.entryInfoList(QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
+        for (auto entry : entries) {
+            auto rel_path = tmp_extract_dir.relativeFilePath(entry.absoluteFilePath());
+            auto install_path = FS::PathCombine(m_rootPath, rel_path);
+            logUpdate(tr("Installing %1").arg(install_path));
+            FS::ensureFilePathExists(install_path);
+            if (entry.isDir()) {
+                FS::ensureFolderPathExists(install_path);
+            } else {
+                auto copy_result = FS::copy(entry.absoluteFilePath(), install_path).overwrite(true)();
+                if (!copy_result) {
+                    logUpdate(tr("Failed to copy %1 to %2").arg(entry.absoluteFilePath()).arg(install_path));
+                    error = true;
+                }
+            }
+        }
+
+        // Step 4: Clean up temp extract dir
+        FS::deletePath(temp_extract_path);
+
+        // Step 5: Write success/fail markers
+        if (error) {
+            logUpdate(tr("There were errors installing the update."));
+            auto fail_marker = FS::PathCombine(m_dataPath, ".prism_launcher_update.fail");
+            FS::copy(m_updateLogPath, fail_marker).overwrite(true)();
+        } else {
+            logUpdate(tr("Update succeeded."));
+            auto success_marker = FS::PathCombine(m_dataPath, ".prism_launcher_update.success");
+            FS::copy(m_updateLogPath, success_marker).overwrite(true)();
+        }
+
+        // Step 6: Remove lock file
+        FS::deletePath(update_lock_path);
+
+        // Step 7: Restart launcher
+        QProcess proc;
+        auto app_exe_name = BuildConfig.LAUNCHER_APP_BINARY_NAME;
+#if defined Q_OS_WIN32
+        app_exe_name.append(".exe");
+        auto env = QProcessEnvironment::systemEnvironment();
+        env.insert("__COMPAT_LAYER", "RUNASINVOKER");
+        proc.setProcessEnvironment(env);
+#else
+        app_exe_name.prepend("bin/");
+#endif
+        auto app_exe_path = FS::PathCombine(m_rootPath, app_exe_name);
+        proc.startDetached(app_exe_path);
+        exit(error ? 1 : 0);
     } else {
         logUpdate(tr("Running installer file at %1").arg(file.absoluteFilePath()));
         QProcess proc = QProcess();
@@ -961,16 +1027,16 @@ void PrismUpdaterApp::backupAppDir()
         }
     }
 
-    if (file_list.isEmpty()) {
+        if (file_list.isEmpty()) {
         // best guess
         if (BuildConfig.BUILD_ARTIFACT.toLower().contains("linux")) {
-            file_list.append({ "MintLauncher", "bin", "share", "lib" });
+            file_list.append({ "mintlauncher", "bin", "share", "lib" });
         } else {  // windows by process of elimination
             file_list.append({
                 "jars",
-                "MintLauncher.exe",
-                "MintLauncher_filelink.exe",
-                "MintLauncher_updater.exe",
+                "mintlauncher.exe",
+                "mintlauncher_filelink.exe",
+                "mintlauncher_updater.exe",
                 "qtlogging.ini",
                 "imageformats",
                 "iconengines",
