@@ -58,6 +58,7 @@
 
 #include "minecraft/launch/AutoInstallJava.h"
 #include "minecraft/launch/ClaimAccount.h"
+#include "minecraft/launch/ApplyGameSettings.h"
 #include "minecraft/launch/CreateGameFolders.h"
 #include "minecraft/launch/EnsureAvailableMemory.h"
 #include "minecraft/launch/EnsureOfflineLibraries.h"
@@ -264,6 +265,9 @@ void MinecraftInstance::loadSpecificSettings()
     m_settings->registerSetting("ExportAuthor", "");
     m_settings->registerSetting("ExportOptionalFiles", true);
     m_settings->registerSetting("ExportRecommendedRAM");
+
+    // Global game settings toggle
+    m_settings->registerSetting("UseGlobalGameSettings", false);
 
     auto dataPacksEnabled = m_settings->registerSetting("GlobalDataPacksEnabled", false);
     auto dataPacksPath = m_settings->registerSetting("GlobalDataPacksPath", "");
@@ -1149,6 +1153,11 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
     // create the .minecraft folder and server-resource-packs (workaround for Minecraft bug MCL-3732)
     {
         process->appendStep(makeShared<CreateGameFolders>(pptr));
+    }
+
+    // apply global game settings (FOV, sensitivity, etc.) if enabled
+    {
+        process->appendStep(makeShared<ApplyGameSettings>(pptr));
     }
 
     if (!targetToJoin && settings()->get("JoinServerOnLaunch").toBool()) {

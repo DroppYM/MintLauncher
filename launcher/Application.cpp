@@ -65,6 +65,7 @@
 #include "ui/pages/global/LanguagePage.h"
 #include "ui/pages/global/LauncherPage.h"
 #include "ui/pages/global/MinecraftPage.h"
+#include "ui/pages/global/GameSettingsPage.h"
 #include "ui/pages/global/ProxyPage.h"
 
 #include "ui/setupwizard/AutoJavaWizardPage.h"
@@ -652,6 +653,17 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting("BackgroundCat", QString());
     m_settings->registerSetting("MintInstallCustomSkinLoader", false);
 
+        // Game Settings (global overrides for Minecraft options.txt)
+        m_settings->registerSetting("GameFov", 70);
+        m_settings->registerSetting("GameMouseSensitivity", 100);
+        m_settings->registerSetting("GameGamma", 50);
+        m_settings->registerSetting("GameRenderDistance", 12);
+        m_settings->registerSetting("GameGuiScale", 0);
+        m_settings->registerSetting("GameAutoJump", true);
+        m_settings->registerSetting("GameToggleSneak", false);
+        m_settings->registerSetting("GameToggleSprint", false);
+        m_settings->registerSetting("GameLanguage", "");
+
         // Remembered state
         m_settings->registerSetting("LastUsedGroupForNewInstance", QString());
 
@@ -925,6 +937,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
             m_globalSettingsProvider->addPage<APIPage>();
             m_globalSettingsProvider->addPage<ExternalToolsPage>();
             m_globalSettingsProvider->addPage<ProxyPage>();
+            m_globalSettingsProvider->addPage<GameSettingsPage>();
         }
 
         PixmapCache::setInstance(new PixmapCache(this));

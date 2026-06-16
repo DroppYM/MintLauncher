@@ -270,6 +270,8 @@ set(MINECRAFT_SOURCES
     minecraft/update/LibrariesTask.cpp
     minecraft/update/LibrariesTask.h
 
+    minecraft/launch/ApplyGameSettings.cpp
+    minecraft/launch/ApplyGameSettings.h
     minecraft/launch/ClaimAccount.cpp
     minecraft/launch/ClaimAccount.h
     minecraft/launch/CreateGameFolders.cpp
@@ -958,6 +960,9 @@ SET(LAUNCHER_SOURCES
     # GUI - global settings pages
     ui/pages/global/AccountListPage.cpp
     ui/pages/global/AccountListPage.h
+
+    ui/pages/global/GameSettingsPage.cpp
+    ui/pages/global/GameSettingsPage.h
     ui/pages/global/ExternalToolsPage.cpp
     ui/pages/global/ExternalToolsPage.h
     ui/pages/global/JavaPage.cpp
@@ -1230,6 +1235,7 @@ qt_wrap_ui(LAUNCHER_UI
     ui/setupwizard/AutoJavaWizardPage.ui
     ui/setupwizard/LoginWizardPage.ui
     ui/pages/global/AccountListPage.ui
+    ui/pages/global/GameSettingsPage.ui
     ui/pages/global/JavaPage.ui
     ui/pages/global/LauncherPage.ui
     ui/pages/global/APIPage.ui
