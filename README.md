@@ -1,10 +1,4 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/program_info/io.github.mintlauncher.MintLauncher.logo-darkmode.svg">
-    <source media="(prefers-color-scheme: light)" srcset="/program_info/io.github.mintlauncher.MintLauncher.logo.svg">
-    <img alt="Mint Launcher" src="/program_info/io.github.mintlauncher.MintLauncher.logo.svg" width="40%">
-  </picture>
-</p>
 
 # Mint Launcher
 
