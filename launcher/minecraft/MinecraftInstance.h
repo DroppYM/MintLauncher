@@ -171,4 +171,5 @@ class MinecraftInstance : public BaseInstance {
     std::unique_ptr<TexturePackFolderModel> m_texture_pack_list;
     std::unique_ptr<DataPackFolderModel> m_data_pack_list;
     std::unique_ptr<WorldList> m_world_list;
+    std::unique_ptr<SkinProxyServer> m_skinProxyServer;
 };

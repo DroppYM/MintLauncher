@@ -42,6 +42,7 @@
 #include "QObjectPtr.h"
 #include "settings/Setting.h"
 #include "settings/SettingsObject.h"
+#include "minecraft/SkinProxyServer.h"
 
 #include "FileSystem.h"
 #include "MMCTime.h"
@@ -58,13 +59,13 @@
 
 #include "minecraft/launch/AutoInstallJava.h"
 #include "minecraft/launch/ClaimAccount.h"
-#include "minecraft/launch/ApplyGameSettings.h"
 #include "minecraft/launch/CreateGameFolders.h"
 #include "minecraft/launch/EnsureAvailableMemory.h"
 #include "minecraft/launch/EnsureOfflineLibraries.h"
 #include "minecraft/launch/ExtractNatives.h"
 #include "minecraft/launch/LauncherPartLaunch.h"
 #include "minecraft/launch/ModMinecraftJar.h"
+#include "minecraft/launch/SkinProxyLaunchStep.h"
 #include "minecraft/launch/PrintInstanceInfo.h"
 #include "minecraft/launch/ReconstructAssets.h"
 #include "minecraft/launch/ScanModFolders.h"
@@ -267,7 +268,6 @@ void MinecraftInstance::loadSpecificSettings()
     m_settings->registerSetting("ExportRecommendedRAM");
 
     // Global game settings toggle
-    m_settings->registerSetting("UseGlobalGameSettings", false);
 
     auto dataPacksEnabled = m_settings->registerSetting("GlobalDataPacksEnabled", false);
     auto dataPacksPath = m_settings->registerSetting("GlobalDataPacksPath", "");
@@ -1155,11 +1155,6 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
         process->appendStep(makeShared<CreateGameFolders>(pptr));
     }
 
-    // apply global game settings (FOV, sensitivity, etc.) if enabled
-    {
-        process->appendStep(makeShared<ApplyGameSettings>(pptr));
-    }
-
     if (!targetToJoin && settings()->get("JoinServerOnLaunch").toBool()) {
         QString fullAddress = settings()->get("JoinServerOnLaunchAddress").toString();
         if (!fullAddress.isEmpty()) {
@@ -1209,6 +1204,8 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
     // if we aren't in offline mode
     if (session->launchMode != LaunchMode::Offline) {
         process->appendStep(makeShared<ClaimAccount>(pptr, session));
+        // Mint Launcher: start skin proxy for TLauncher/ely.by skins
+        process->appendStep(makeShared<SkinProxyLaunchStep>(pptr));
         for (auto t : createUpdateTask()) {
             process->appendStep(makeShared<TaskStepWrapper>(pptr, t));
         }
